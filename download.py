@@ -5,7 +5,7 @@ import subprocess
 
 def download_uspto_thursday_files():
     start_date = datetime.date(2001, 3, 15)
-    end_date   = datetime.date(2025, 2, 20)
+    end_date   = datetime.date(2025, 9, 25)
 
     # Ensure the download directory exists
     download_dir = "/home/dan/patents-rag/bulk"
