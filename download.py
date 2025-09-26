@@ -8,7 +8,7 @@ def download_uspto_thursday_files():
     end_date   = datetime.date(2025, 2, 20)
 
     # Ensure the download directory exists
-    download_dir = "/home/dan/patents/bulk"
+    download_dir = "/home/dan/patents-rag/bulk"
     os.makedirs(download_dir, exist_ok=True)
 
     # Use a Chrome or Firefox user agent to look more like a normal browser
