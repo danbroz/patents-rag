@@ -1,0 +1,39 @@
+# Large data directories
+bulk/
+bulk-older/
+patents-embeddings/
+patents-index/
+xml-files/
+partial-patents/
+zips/
+
+# Large individual files
+*.tar
+*.tar.gz
+*.zip
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
+# Virtual environment
+venv/
+env/
+.venv/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
