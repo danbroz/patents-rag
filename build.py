@@ -30,10 +30,10 @@ torch.backends.cudnn.benchmark = True
 # =============================================================================
 
 START_DATE = datetime.date(2001, 3, 15)  # Only Thursdays processed
-END_DATE   = datetime.date(2025, 2, 20)
+END_DATE   = datetime.date(2025, 9, 25)
 
 DOWNLOAD_DIR    = "zips"
-BACKUP_DIR      = "/media/dan/0-7/laptop1-backup/bulk"  # only accessible on rank=0 node
+BACKUP_DIR      = "bulk"  # only accessible on rank=0 node
 XML_FILES_DIR   = "xml-files"
 PARTIAL_DIR     = "partial-patents"
 FINAL_INDEX_DIR = "patents-index"
