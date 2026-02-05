@@ -54,6 +54,10 @@ pip install -r requirements.txt
 pip install torch torchvision torchaudio
 pip install sentence-transformers lxml requests numpy
 
+# Optional: for 1790-2002 PDFs with no text layer (OCR)
+# pip install pytesseract Pillow
+# System: sudo apt install tesseract-ocr   # Linux
+
 # Set up your USPTO API key (get one at https://developer.uspto.gov/)
 cp .env-example .env
 # Edit .env and set USPTO_API_KEY=your-actual-key
@@ -71,10 +75,23 @@ python3 download_older_grants.py
 ```
 
 #### 2. Process and Build Embeddings
+
+To include **all** patents (1790–present), run in order:
+
 ```bash
-# Process all downloaded patents with multi-GPU support
+# Step 1: Process XML patents (2002–present) from bulk/
 ./launch_build_bulk.sh
+# or: python3 build_grants_bulk.py
+
+# Step 2: Process PDF patents (1790–2002) from bulk-older/ (text extraction + optional OCR)
+python3 build_older_grants.py
+# or: ./launch_build_older.sh
+
+# Step 3: Merge both into the final RAG index (older first, then 2002+)
+python3 merge_rag_index.py
 ```
+
+To use only XML data (2002–present), run step 1 only; the index is written by `build_grants_bulk.py` (no merge needed). The 1790–2002 pipeline uses PDF text extraction (PyMuPDF) and optional OCR (Tesseract) for image-only scans, so it is slower and noisier than the XML pipeline.
 
 #### 3. Use the RAG System
 ```python
@@ -106,15 +123,18 @@ for idx in top_indices:
 
 ```
 patents-rag/
-├── download_grants.py          # Download XML patents (2002-2025)
+├── download_grants.py          # Download XML patents (2002-present)
 ├── download_older_grants.py    # Download PDF patents (1790-2002)
-├── build_grants.py             # Distributed processing (original)
-├── build_grants_mp.py          # Multiprocessing approach
-├── build_grants_bulk.py        # Process existing bulk files
-├── launch_build_*.sh           # Launch scripts for different approaches
-├── checkpoints/                # Progress tracking
-├── bulk/                       # XML patent files (113 GB)
-├── bulk-older/                 # PDF patent files (1 TB)
+├── build_grants_bulk.py        # Process bulk/ XML → partial-patents/
+├── build_older_grants.py       # Process bulk-older/ PDFs → partial-patents-older/
+├── merge_rag_index.py          # Merge older + XML chunks → final index
+├── launch_build_bulk.sh        # Run XML pipeline
+├── launch_build_older.sh       # Run PDF (1790-2002) pipeline
+├── checkpoints/                # Progress tracking (build-progress.txt, build-progress-older.txt)
+├── bulk/                       # XML patent files (113+ GB)
+├── bulk-older/                 # PDF patent tarballs (1 TB)
+├── partial-patents/            # Chunks from XML pipeline
+├── partial-patents-older/      # Chunks from PDF pipeline
 ├── patents-index/              # Processed patent titles
 ├── patents-embeddings/         # Generated embeddings
 └── README.md                   # This file
@@ -167,11 +187,13 @@ model = SentenceTransformer('sentence-transformers/all-mpnet-base-v2')
 ### Resume Processing
 The system automatically resumes from checkpoints:
 ```bash
-# Check progress
+# XML pipeline progress
 cat checkpoints/build-progress.txt
-
-# Resume processing
 ./launch_build_bulk.sh
+
+# PDF (1790-2002) pipeline progress
+cat checkpoints/build-progress-older.txt
+python3 build_older_grants.py
 ```
 
 ## 📈 Performance

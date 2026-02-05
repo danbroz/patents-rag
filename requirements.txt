@@ -1,1 +1,3 @@
 python-dotenv>=1.0.0
+pymupdf>=1.23.0
+# Optional for OCR when PDFs have no text layer (1790-2002): pip install pytesseract Pillow; system: tesseract-ocr

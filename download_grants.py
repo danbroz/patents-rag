@@ -21,7 +21,7 @@ BULK_DIR = "/home/dan/patents-rag/bulk"
 
 # Date range for the data
 START_DATE = "2002-01-01"
-END_DATE = "2025-09-26"
+END_DATE = "2026-02-05"
 
 # Setup logging
 logging.basicConfig(
