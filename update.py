@@ -110,11 +110,7 @@ def main() -> int:
 
         py = sys.executable or "python3"
 
-        rc = _run([py, "download.py", "--xml", "--xml-start", start.isoformat(), "--xml-end", end.isoformat()], args.dry_run)
-        if rc != 0:
-            return rc
-
-        rc = _run([py, "build.py"], args.dry_run)
+        rc = _run([py, "build.py", "--xml-only", "--xml-start", start.isoformat(), "--xml-end", end.isoformat()], args.dry_run)
         if rc != 0:
             return rc
 

@@ -65,26 +65,31 @@ cp .env-example .env
 
 ### Basic Usage
 
-#### 1. Download Patent Data
-```bash
-# Download modern XML + historical PDF patents
-python3 download.py
-```
+#### 1. Download + Build (one step)
 
-#### 2. Process and Build Embeddings
-
-To build the full RAG index (1790–present), run:
+To download **and** process the full RAG index (1790–present) in a single step, run:
 
 ```bash
 python3 build.py
 ```
 
-`build.py` automatically detects and processes whichever sources are present:
+The unified `build.py` script:
 
-- `bulk/*.zip` (XML grants, 2002–present)
-- `bulk-older/*.tar` (PDF grants, 1790–2002)
+- Calls the USPTO APIs for both:
+  - `ptgrxml` (XML grants, 2002–present)
+  - `ptgrmp2` (PDF grants, 1790–2002)
+- For each file:
+  - Skips it if already recorded in `checkpoints/build-progress*.txt`
+  - If the archive already exists in `bulk/` or `bulk-older/`, reuses it
+  - Otherwise downloads it
+  - Immediately processes it into embeddings / FAISS + titles
+  - Updates the appropriate checkpoint file
+  - Deletes the source `.zip`/`.tar` and temporary extracted files
 
-It builds **`patents-embeddings/index.faiss`** and **`patents-index/patent_titles.npy`**, then deletes processed `.zip`/`.tar` archives to save disk space.
+Outputs:
+
+- **`patents-embeddings/index.faiss`**
+- **`patents-index/patent_titles.npy`**
 
 The 1790–2002 pipeline uses PDF text extraction (PyMuPDF) and optional OCR (Tesseract) for image-only scans, so it is slower and noisier than the XML pipeline.
 
@@ -96,7 +101,7 @@ To download only **newer** XML grant files since the last checkpoint, rebuild th
 python3 update.py
 ```
 
-`update.py` reads `checkpoints/build-progress.txt` to find the latest processed `ipgYYMMDD.zip`/`pgYYMMDD.zip`, downloads newer XML files via `download.py`, then runs `build.py` and `deploy.py`.
+`update.py` reads `checkpoints/build-progress.txt` to find the latest processed `ipgYYMMDD.zip`/`pgYYMMDD.zip`, then calls `build.py --xml-only --xml-start ... --xml-end ...` to download and process newer XML files, followed by `deploy.py`.
 
 ## 🔌 MCP Server (Docker)
 
@@ -157,8 +162,8 @@ for idx, score in zip(top_indices, top_scores):
 
 ```
 patents-rag/
-├── download.py                 # Unified download: XML + older PDFs
-├── build.py                    # Unified build: zip/tar → FAISS index + titles
+├── download.py                 # Legacy manual downloader (XML + older PDFs)
+├── build.py                    # Unified download+build: API → zip/tar → FAISS index + titles
 ├── deploy.py                   # Python-only Docker deploy script for MCP server
 ├── checkpoints/                # Progress tracking (build-progress.txt, build-progress-older.txt)
 ├── bulk/                       # XML patent files (113+ GB)
