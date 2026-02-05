@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """
-Download Patent Grant Full-Text Data (No Images) - XML from USPTO API
+Moved to old_scripts/. Kept for reference.
+
+Original: Download Patent Grant Full-Text Data (No Images) - XML from USPTO API
 """
 
 import requests
@@ -221,3 +223,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

@@ -1,3 +1,20 @@
 python-dotenv>=1.0.0
 pymupdf>=1.23.0
 # Optional for OCR when PDFs have no text layer (1790-2002): pip install pytesseract Pillow; system: tesseract-ocr
+faiss-gpu
+
+# MCP server (HTTP/SSE) dependencies
+mcp
+starlette
+uvicorn
+sse-starlette
+anyio
+pydantic
+
+# Core runtime deps used by build.py and the MCP server
+numpy
+sentence-transformers
+torch
+
+# If you want a CPU-only environment (e.g. some Docker deployments), you can
+# replace `faiss-gpu` with `faiss-cpu`.

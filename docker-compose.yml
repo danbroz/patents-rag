@@ -1,0 +1,13 @@
+services:
+  patents-rag-mcp:
+    build: .
+    container_name: patents-rag-mcp
+    ports:
+      - "9000:9000"
+    environment:
+      PORT: "9000"
+      FAISS_INDEX_PATH: "/app/patents-embeddings/index.faiss"
+      TITLES_PATH: "/app/patents-index/patent_titles.npy"
+    volumes:
+      - ./patents-embeddings:/app/patents-embeddings:ro
+      - ./patents-index:/app/patents-index:ro

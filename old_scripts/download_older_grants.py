@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """
-Download Patent Grant Multi-page PDF Images from USPTO API
+Moved to old_scripts/. Kept for reference.
+
+Original: Download Patent Grant Multi-page PDF Images from USPTO API
 Date range: 1790-07-31 to 2002-02-01
 """
 
@@ -176,12 +178,10 @@ def main():
             logging.info(f"Processing file {i}/{len(files_to_download)}")
             
             # Extract filename and URL from file info
-            # The structure may vary, so we'll try different approaches
             filename = None
             file_url = None
             
             if isinstance(file_info, dict):
-                # Try common field names for filename and URL
                 filename = (file_info.get('fileName') or 
                           file_info.get('filename') or 
                           file_info.get('name') or 
@@ -191,7 +191,6 @@ def main():
                           file_info.get('downloadUrl') or 
                           file_info.get('link'))
             elif isinstance(file_info, str):
-                # If it's just a string, assume it's a URL and extract filename
                 file_url = file_info
                 filename = file_url.split('/')[-1]
             
@@ -200,7 +199,6 @@ def main():
                 failed_downloads += 1
                 continue
             
-            # Log file information
             file_size = file_info.get('fileSize', 'unknown') if isinstance(file_info, dict) else 'unknown'
             if file_size != 'unknown':
                 file_size_mb = file_size / (1024 * 1024)
@@ -208,7 +206,6 @@ def main():
             else:
                 logging.info(f"File: {filename}")
             
-            # Download the file
             if download_file(file_url, filename):
                 successful_downloads += 1
             else:

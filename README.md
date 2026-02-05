@@ -67,76 +67,104 @@ cp .env-example .env
 
 #### 1. Download Patent Data
 ```bash
-# Download modern XML patents (2002-2025)
-python3 download_grants.py
-
-# Download historical PDF patents (1790-2002)
-python3 download_older_grants.py
+# Download modern XML + historical PDF patents
+python3 download.py
 ```
 
 #### 2. Process and Build Embeddings
 
-To include **all** patents (1790–present), run in order:
+To build the full RAG index (1790–present), run:
 
 ```bash
-# Step 1: Process XML patents (2002–present) from bulk/
-./launch_build_bulk.sh
-# or: python3 build_grants_bulk.py
-
-# Step 2: Process PDF patents (1790–2002) from bulk-older/ (text extraction + optional OCR)
-python3 build_older_grants.py
-# or: ./launch_build_older.sh
-
-# Step 3: Merge both into the final RAG index (older first, then 2002+)
-python3 merge_rag_index.py
+python3 build.py
 ```
 
-To use only XML data (2002–present), run step 1 only; the index is written by `build_grants_bulk.py` (no merge needed). The 1790–2002 pipeline uses PDF text extraction (PyMuPDF) and optional OCR (Tesseract) for image-only scans, so it is slower and noisier than the XML pipeline.
+`build.py` automatically detects and processes whichever sources are present:
+
+- `bulk/*.zip` (XML grants, 2002–present)
+- `bulk-older/*.tar` (PDF grants, 1790–2002)
+
+It builds **`patents-embeddings/index.faiss`** and **`patents-index/patent_titles.npy`**, then deletes processed `.zip`/`.tar` archives to save disk space.
+
+The 1790–2002 pipeline uses PDF text extraction (PyMuPDF) and optional OCR (Tesseract) for image-only scans, so it is slower and noisier than the XML pipeline.
+
+#### Incremental updates (XML-only)
+
+To download only **newer** XML grant files since the last checkpoint, rebuild the FAISS index, and redeploy the MCP server:
+
+```bash
+python3 update.py
+```
+
+`update.py` reads `checkpoints/build-progress.txt` to find the latest processed `ipgYYMMDD.zip`/`pgYYMMDD.zip`, downloads newer XML files via `download.py`, then runs `build.py` and `deploy.py`.
+
+## 🔌 MCP Server (Docker)
+
+This repo includes a small **MCP HTTP/SSE server** that exposes a `patent_search` tool backed by your FAISS index.
+
+### Build the index first
+The MCP server requires:
+- `patents-embeddings/index.faiss`
+- `patents-index/patent_titles.npy`
+
+Create them with:
+```bash
+python3 build.py
+```
+
+### Deploy locally with Docker
+```bash
+python3 deploy.py
+```
+
+- **SSE endpoint**: `http://localhost:9000/sse`
+- The server will emit an `endpoint` SSE event telling the client where to POST MCP messages (usually `/messages/?session_id=...`).
+
+### Configuration (env vars)
+- `PORT` (default: `9000`)
+- `FAISS_INDEX_PATH` (default: `patents-embeddings/index.faiss`)
+- `TITLES_PATH` (default: `patents-index/patent_titles.npy`)
+- `MODEL_NAME` (default: `sentence-transformers/all-MiniLM-L6-v2`)
 
 #### 3. Use the RAG System
 ```python
 import numpy as np
+import faiss
 from sentence_transformers import SentenceTransformer
 
 # Load the model
 model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
 
 # Load patent data
-titles = np.load('patents-index/patent_titles.npy')
-embeddings = np.memmap('patents-embeddings/embeddings.memmap', 
-                       dtype='float32', mode='r')
+titles = np.load('patents-index/patent_titles.npy', allow_pickle=True)
+index = faiss.read_index('patents-embeddings/index.faiss')
 
 # Semantic search
 query = "artificial intelligence machine learning"
-query_embedding = model.encode([query])
+q = model.encode([query]).astype('float32')
 
-# Find similar patents
-similarities = np.dot(embeddings, query_embedding.T).flatten()
-top_indices = np.argsort(similarities)[-10:][::-1]
+# Find similar patents (inner product; for normalized vectors this equals cosine similarity)
+scores, ids = index.search(q, k=10)
+top_indices = ids[0]
+top_scores = scores[0]
 
-for idx in top_indices:
+for idx, score in zip(top_indices, top_scores):
     print(f"Patent: {titles[idx]}")
-    print(f"Similarity: {similarities[idx]:.4f}")
+    print(f"Similarity: {score:.4f}")
 ```
 
 ## 📁 Project Structure
 
 ```
 patents-rag/
-├── download_grants.py          # Download XML patents (2002-present)
-├── download_older_grants.py    # Download PDF patents (1790-2002)
-├── build_grants_bulk.py        # Process bulk/ XML → partial-patents/
-├── build_older_grants.py       # Process bulk-older/ PDFs → partial-patents-older/
-├── merge_rag_index.py          # Merge older + XML chunks → final index
-├── launch_build_bulk.sh        # Run XML pipeline
-├── launch_build_older.sh       # Run PDF (1790-2002) pipeline
+├── download.py                 # Unified download: XML + older PDFs
+├── build.py                    # Unified build: zip/tar → FAISS index + titles
+├── deploy.py                   # Python-only Docker deploy script for MCP server
 ├── checkpoints/                # Progress tracking (build-progress.txt, build-progress-older.txt)
 ├── bulk/                       # XML patent files (113+ GB)
 ├── bulk-older/                 # PDF patent tarballs (1 TB)
-├── partial-patents/            # Chunks from XML pipeline
-├── partial-patents-older/      # Chunks from PDF pipeline
 ├── patents-index/              # Processed patent titles
-├── patents-embeddings/         # Generated embeddings
+├── patents-embeddings/         # FAISS index (index.faiss) and temporary artifacts
 └── README.md                   # This file
 ```
 

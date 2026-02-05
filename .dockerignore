@@ -1,0 +1,24 @@
+# Large data directories
+bulk/
+bulk-older/
+patents-embeddings/
+patents-index/
+xml-files/
+partial-patents/
+zips/
+
+# Logs / temporary artifacts
+logs-*.txt
+*.log
+
+# Python cache / env
+__pycache__/
+*.pyc
+venv/
+.venv/
+env/
+
+# VCS/IDE
+.git/
+.vscode/
+.idea/
