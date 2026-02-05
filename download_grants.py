@@ -8,9 +8,14 @@ import os
 import json
 import logging
 from pathlib import Path
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Configuration
-API_KEY = "yyfujzllgeprxhjuwurymehlwhdefh"
+API_KEY = os.environ.get("USPTO_API_KEY", "").strip()
+if not API_KEY:
+    raise SystemExit("USPTO_API_KEY is not set. Copy .env-example to .env and add your API key.")
 API_BASE_URL = "https://api.uspto.gov/api/v1/datasets/products/ptgrxml"
 BULK_DIR = "/home/dan/patents-rag/bulk"
 

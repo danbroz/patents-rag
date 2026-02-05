@@ -15,6 +15,9 @@ from lxml import etree as ET
 from html import unescape
 import requests
 import json
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # =============================================================================
 # Hardware / Parallelism Tweaks
@@ -32,7 +35,9 @@ torch.backends.cudnn.benchmark = True
 # =============================================================================
 
 # API Configuration
-API_KEY = "yyfujzllgeprxhjuwurymehlwhdefh"
+API_KEY = os.environ.get("USPTO_API_KEY", "").strip()
+if not API_KEY:
+    raise SystemExit("USPTO_API_KEY is not set. Copy .env-example to .env and add your API key.")
 API_BASE_URL = "https://api.uspto.gov/api/v1/datasets/products/ptgrxml"
 START_DATE = "2025-01-01"
 END_DATE = "2025-09-26"

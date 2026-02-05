@@ -50,8 +50,13 @@ python3 -m venv venv
 source venv/bin/activate
 
 # Install dependencies
+pip install -r requirements.txt
 pip install torch torchvision torchaudio
 pip install sentence-transformers lxml requests numpy
+
+# Set up your USPTO API key (get one at https://developer.uspto.gov/)
+cp .env-example .env
+# Edit .env and set USPTO_API_KEY=your-actual-key
 ```
 
 ### Basic Usage
@@ -117,11 +122,21 @@ patents-rag/
 
 ## ⚙️ Configuration
 
-### API Configuration
-Update the API key in download scripts:
-```python
-API_KEY = "your-uspto-api-key-here"
-```
+### API key (`.env`)
+
+The project uses a **USPTO API key** from environment variables. Keys are loaded from a `.env` file so you never commit secrets.
+
+1. **Copy the example file and add your key:**
+   ```bash
+   cp .env-example .env
+   ```
+2. **Edit `.env`** and set your key:
+   ```
+   USPTO_API_KEY=your-uspto-api-key-here
+   ```
+3. Get a free key at [developer.uspto.gov](https://developer.uspto.gov/).
+
+The `.env` file is gitignored. Scripts that call the USPTO API (`download_grants.py`, `download_older_grants.py`, `build_grants.py`, `build_grants_mp.py`) will exit with a clear error if `USPTO_API_KEY` is missing.
 
 ### Hardware Configuration
 The system is optimized for:
